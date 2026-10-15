@@ -1,5 +1,897 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>App</title></head>
-<body>Loading...</body>
+<html lang="tr" dir="ltr">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #eef1f6; --card: #ffffff; --text: #18222f; --muted: #6a7788;
+    --line: #e3e8ef; --accent: #1b5fd6; --accent-2: #0e3a8a; --accent-soft: #e9f0fd;
+    --ok: #17a05a; --mid: #e8a317; --bad: #d1423a; --zebra: #f8fafc;
+    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 14px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1319; --card: #171e27; --text: #e7edf3; --muted: #93a1b1;
+      --line: #28323e; --accent: #5b9dff; --accent-2: #17407f; --accent-soft: #1b2a42;
+      --ok: #4cc47f; --mid: #f0b33c; --bad: #ff7a70; --zebra: #1a222c;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.55;
+  }
+
+  /* ---- Header ---- */
+  .hero {
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: #fff; padding: 26px 16px 56px;
+  }
+  .hero-in { max-width: 1040px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .brand { font-size: clamp(1.9rem, 6vw, 2.8rem); font-weight: 800; letter-spacing: .28em; line-height: 1; margin: 0; }
+  .tag { margin-top: 8px; font-size: .95rem; opacity: .85; letter-spacing: .02em; }
+  .tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn {
+    padding: 9px 18px; font: inherit; font-weight: 600; border-radius: 999px;
+    background: rgba(255,255,255,.18); color: #fff; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.35); white-space: nowrap;
+  }
+  .btn:hover { background: rgba(255,255,255,.28); }
+  .btn.solid { background: var(--accent); border-color: var(--accent); }
+  .lang { display: inline-flex; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 2px; background: rgba(255,255,255,.12); }
+  .lang button { border: 0; background: transparent; color: #fff; font: inherit; font-size: .82rem; font-weight: 700; letter-spacing: .05em; padding: 6px 12px; border-radius: 999px; cursor: pointer; opacity: .75; }
+  .lang button.on { background: #fff; color: var(--accent-2); opacity: 1; }
+
+  .wrap { max-width: 1040px; margin: -36px auto 0; padding: 0 16px 28px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; }
+  .field { flex: 1 1 220px; min-width: 0; }
+  .lbl { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+  select {
+    width: 100%; padding: 10px 12px; font: inherit; color: var(--text); background: var(--card);
+    border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+  }
+  select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .seg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; padding: 8px 6px; font: inherit; font-size: .9rem; border: 0; border-radius: 8px; cursor: pointer; background: transparent; color: var(--muted); font-weight: 600; }
+  .seg button.on { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(16,24,40,.15); }
+  .check { display: inline-flex; gap: 8px; align-items: center; font-size: .88rem; margin-top: 14px; color: var(--muted); cursor: pointer; }
+
+  /* ---- Stats ---- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; border-left: 4px solid var(--accent); }
+  .stat span { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+  .stat b { display: block; font-size: 1.5rem; line-height: 1.25; font-variant-numeric: tabular-nums; }
+  .stat.ok { border-left-color: var(--ok); }
+  .stat.warn { border-left-color: var(--mid); }
+  .meta { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .meta b { font-size: 1.05rem; }
+  .meta small { color: var(--muted); }
+  .overall { height: 10px; background: var(--line); border-radius: 6px; overflow: hidden; margin: 0 0 14px; }
+  .overall i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--ok)); border-radius: 6px; }
+
+  /* ---- Table ---- */
+  .scroll { overflow: auto; max-height: 64vh; border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { position: sticky; top: 0; z-index: 1; background: var(--card); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+  tbody tr:nth-child(even) { background: var(--zebra); }
+  tbody tr:hover { background: var(--accent-soft); }
+  td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
+  td.dim { color: var(--muted); text-align: center; font-size: .88rem; }
+  td.rest { font-weight: 700; }
+  tr.zero td { opacity: .45; }
+  tfoot td { position: sticky; bottom: 0; background: var(--card); font-weight: 800; border-top: 2px solid var(--line); border-bottom: 0; }
+  .itemlink {
+    display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft);
+    color: var(--accent); font-weight: 700; cursor: pointer; border: 1px solid transparent;
+  }
+  .itemlink:hover { border-color: var(--accent); }
+  .bar { height: 8px; background: var(--line); border-radius: 4px; min-width: 90px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 4px; }
+  .pct { font-size: .72rem; color: var(--muted); }
+  .loc, .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: inherit; font-size: .85rem; font-weight: 700; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
+  .loc:hover, .pill:hover { border-color: var(--accent); }
+  .loc[hidden] { display: none; }
+  .loc svg, .pill svg, .upl svg { width: 15px; height: 15px; fill: currentColor; flex: none; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  /* ---- Photos ---- */
+  .btn.ghost { background: var(--bg); color: var(--text); border-color: var(--line); }
+  .btn.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .overlay { position: fixed; inset: 0; background: rgba(8,14,24,.6); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .overlay[hidden] { display: none; }
+  .dlg { background: var(--card); border-radius: 16px; padding: 18px; width: min(720px, 96vw); max-height: 92vh; overflow: auto; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  .dlg h3 { margin: 0 0 2px; font-size: 1.1rem; }
+  .dlg .sub { color: var(--muted); font-size: .85rem; margin-bottom: 12px; }
+  .upl { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+  .upl .btn { display: inline-flex; align-items: center; gap: 8px; }
+  .uprow { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .upname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .upst { white-space: nowrap; color: var(--muted); }
+  .upst.ok { color: var(--ok); }
+  .upst.bad { color: var(--bad); white-space: normal; text-align: right; }
+  .note { color: var(--muted); padding: 10px 0; font-size: .9rem; }
+  .note.err { color: var(--bad); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .grid .note { grid-column: 1 / -1; }
+  .ph { position: relative; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #111; cursor: pointer; aspect-ratio: 1 / 1; }
+  .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ph span { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 6px; font-size: .68rem; background: rgba(0,0,0,.6); color: #fff; text-align: left; }
+  .lbx { z-index: 20; background: rgba(0,0,0,.88); }
+  .lbbox { max-width: 96vw; text-align: center; }
+  #lbImg { max-width: 96vw; max-height: 74vh; border-radius: 8px; background: #111; }
+  #lbImg.blur { filter: blur(2px); }
+  .lbcap { color: #fff; margin: 10px 0; font-size: .9rem; }
+  .lbbar { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .meta .left { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+
+  .msg { padding: 12px 14px; border-radius: 10px; margin: 0 0 14px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .msg.err { color: var(--bad); border-color: var(--bad); }
+  .snap { text-align: center; color: var(--muted); font-size: .8rem; padding: 0 0 8px; }
+  .snap[hidden] { display: none; }
+  .foot { text-align: center; color: var(--muted); font-size: .78rem; letter-spacing: .3em; padding: 6px 0 18px; }
+
+  /* ---- Detail dialog ---- */
+  #modal { position: fixed; inset: 0; background: rgba(8,14,24,.6); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  #modal[hidden] { display: none; }
+  #modal .box { background: var(--card); border-radius: 16px; padding: 18px; width: min(460px, 94vw); box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  #modal .cap { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  #modal .cap b { font-size: 1.3rem; }
+  #modal .cap span { color: var(--muted); }
+  table.mt { margin-top: 12px; }
+  table.mt th { position: static; }
+  table.mt td { white-space: normal; }
+  table.mt tr.total td { font-weight: 800; background: var(--accent-soft); }
+
+  @media (max-width: 560px) {
+    .hero { padding-bottom: 50px; }
+    .hero-in { align-items: flex-start; flex-direction: column; }
+    .tools { justify-content: flex-start; }
+    th, td { padding: 8px 8px; }
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-in">
+    <div>
+      <h1 class="brand">TEKYA</h1>
+      <div class="tag" data-i18n="tag"></div>
+    </div>
+    <div class="tools">
+      <div class="lang" id="langSeg">
+        <button data-lang="tr">TR</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <button class="btn" id="btnReload" data-i18n="reload"></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="status"></div>
+
+  <div class="card" id="pickers" hidden>
+    <div class="row">
+      <div class="field">
+        <label class="lbl" for="selProject" data-i18n="project"></label>
+        <select id="selProject"></select>
+      </div>
+      <div class="field">
+        <label class="lbl" for="selBloc" data-i18n="block"></label>
+        <select id="selBloc"></select>
+      </div>
+      <div class="field">
+        <span class="lbl" data-i18n="view"></span>
+        <div class="seg" id="modeSeg">
+          <button data-mode="proposed" class="on" data-i18n="proposed"></button>
+          <button data-mode="done" data-i18n="done"></button>
+          <button data-mode="compare" data-i18n="compare"></button>
+        </div>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="hideZero"> <span data-i18n="hideZero"></span></label>
+  </div>
+
+  <div class="card" id="results" hidden>
+    <div class="meta">
+      <div class="left"><b id="metaTitle"></b><small id="metaSub"></small></div>
+      <div class="actions">
+        <a class="loc" id="loc" href="#" target="_blank" rel="noopener noreferrer" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+          <span data-i18n="location"></span> ↗
+        </a>
+        <button class="pill" id="btnUpload" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-2H5v2zM12 2 6.5 7.5l1.4 1.4L11 5.8V16h2V5.8l3.1 3.1 1.4-1.4L12 2z"/></svg>
+          <span data-i18n="uploadPhoto"></span>
+        </button>
+        <button class="pill" id="btnPhotos" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>
+          <span id="photosLbl"></span>
+        </button>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="overall" id="overall" hidden><i id="overallBar"></i></div>
+    <div class="scroll"><table id="tbl"></table></div>
+  </div>
+  <div class="snap" id="snap" hidden></div>
+  <div class="foot">TEKYA</div>
+</div>
+
+<div id="modal" hidden>
+  <div class="box">
+    <div class="cap"><b id="modalName"></b><span id="modalDim"></span></div>
+    <div id="modalBody"></div>
+    <button class="btn solid" id="modalClose" style="margin-top:14px" data-i18n="close"></button>
+  </div>
+</div>
+
+<div id="upModal" class="overlay" hidden>
+  <div class="dlg">
+    <h3 data-i18n="upTitle"></h3>
+    <div class="sub" id="upSub"></div>
+    <label class="lbl" for="upBloc" data-i18n="block"></label>
+    <select id="upBloc"></select>
+    <div class="upl">
+      <button class="btn solid" id="btnCam" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+        <span data-i18n="takePhoto"></span>
+      </button>
+      <button class="btn solid" id="btnPick" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>
+        <span data-i18n="fromDevice"></span>
+      </button>
+    </div>
+    <input type="file" id="inCam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="inFile" accept="image/*" multiple hidden>
+    <div id="upList"></div>
+    <div class="note" id="upNote" data-i18n="offlineNote" hidden></div>
+    <button class="btn ghost" id="upClose" type="button" data-i18n="close" style="margin-top:12px"></button>
+  </div>
+</div>
+
+<div id="phModal" class="overlay" hidden>
+  <div class="dlg">
+    <h3 data-i18n="phTitle"></h3>
+    <div class="sub" id="phSub"></div>
+    <select id="phBloc" style="margin-bottom:12px" hidden></select>
+    <div class="grid" id="phGrid"></div>
+    <button class="btn ghost" id="phClose" type="button" data-i18n="close" style="margin-top:12px"></button>
+  </div>
+</div>
+
+<div id="lb" class="overlay lbx" hidden>
+  <div class="lbbox">
+    <img id="lbImg" alt="">
+    <div class="lbcap" id="lbCap"></div>
+    <div class="lbbar">
+      <button class="btn ghost" id="lbPrev" type="button" aria-label="Previous">‹</button>
+      <button class="btn ghost" id="lbNext" type="button" aria-label="Next">›</button>
+      <button class="btn ghost" id="lbDel" type="button"></button>
+      <button class="btn solid" id="lbClose" type="button" data-i18n="close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Languages / Diller ----------
+var I18N = {
+  tr: {
+    tag: 'İş Takibi · Önerilen ve Gerçekleşen', reload: 'Yenile',
+    project: 'Proje', block: 'Blok', view: 'Görünüm',
+    proposed: 'Önerilen', done: 'Gerçekleşen', compare: 'Karşılaştırma',
+    hideZero: 'Miktarı sıfır olan kalemleri gizle',
+    loading: 'Veriler dosyadan yükleniyor...', loadFail: 'Veriler yüklenemedi: ',
+    noProjects: 'Hiçbir proje tablosu bulunamadı. Her tablo (proje kodu | başlık) satırıyla başlamalı ve ardından BLOC satırı gelmelidir.',
+    allBlocks: 'Tüm bloklar', allBlocksTotal: 'Tüm bloklar (toplam)', blockN: 'Blok ',
+    noProposed: 'Bu proje için önerilen tablosu yok.', noDone: 'Bu proje için gerçekleşen tablosu yok.',
+    needBoth: 'Karşılaştırma için bu projenin her iki tablosu da gerekli.',
+    item: 'Kalem', size: 'Ölçü', qty: 'Miktar', remaining: 'Kalan', progress: 'İlerleme', completion: 'Tamamlanma',
+    total: 'Toplam', totalDone: 'Toplam gerçekleşen', totalProposed: 'Toplam önerilen', itemCount: 'Kalem sayısı',
+    snapshot: 'Çevrimdışı kopya · veriler {d} tarihli', noData: 'Gömülü veri bulunamadı.',
+    uploadPhoto: 'Fotoğraf Yükle', photos: 'Fotoğraflar', upTitle: 'Fotoğraf yükle', takePhoto: 'Kamera ile çek',
+    fromDevice: 'Cihazdan seç', noBlock: '— Proje geneli —', phTitle: 'Proje fotoğrafları', all: 'Tümü',
+    noPhotos: 'Henüz fotoğraf yok.', phLoading: 'Yükleniyor…', uploading: 'Yükleniyor…', uploaded: 'Yüklendi',
+    failed: 'Hata: ', badImage: 'Görsel okunamadı', delete: 'Sil', sure: 'Emin misiniz? Tekrar dokunun',
+    offlineNote: 'Çevrimdışı kopya: fotoğraflar yalnızca bu cihazda saklanır.',
+    location: 'Proje konumu', noItems: 'Kalem bulunamadı.', close: 'Kapat', sizeLabel: 'Ölçü: ', totalAll: 'Toplam (tüm bloklar)', numLocale: 'tr-TR'
+  },
+  en: {
+    tag: 'Work Tracking · Proposed vs Completed', reload: 'Refresh',
+    project: 'Project', block: 'Block', view: 'View',
+    proposed: 'Proposed', done: 'Completed', compare: 'Compare',
+    hideZero: 'Hide items with zero quantity',
+    loading: 'Loading data from the file...', loadFail: 'Failed to load data: ',
+    noProjects: 'No project table found. Each table must start with a (project code | title) row followed by a BLOC row.',
+    allBlocks: 'All blocks', allBlocksTotal: 'All blocks (total)', blockN: 'Block ',
+    noProposed: 'This project has no proposed table.', noDone: 'This project has no completed table.',
+    needBoth: 'Comparison needs both tables for this project.',
+    item: 'Item', size: 'Size', qty: 'Quantity', remaining: 'Remaining', progress: 'Progress', completion: 'Completion',
+    total: 'Total', totalDone: 'Total completed', totalProposed: 'Total proposed', itemCount: 'Item count',
+    snapshot: 'Offline copy · data as of {d}', noData: 'No embedded data found.',
+    uploadPhoto: 'Upload Photo', photos: 'Photos', upTitle: 'Upload photos', takePhoto: 'Take photo',
+    fromDevice: 'Choose from device', noBlock: '— Whole project —', phTitle: 'Project photos', all: 'All',
+    noPhotos: 'No photos yet.', phLoading: 'Loading…', uploading: 'Uploading…', uploaded: 'Uploaded',
+    failed: 'Failed: ', badImage: 'Could not read the image', delete: 'Delete', sure: 'Sure? Tap again',
+    offlineNote: 'Offline copy: photos are stored on this device only.',
+    location: 'Project location', noItems: 'No items found.', close: 'Close', sizeLabel: 'Size: ', totalAll: 'Total (all blocks)', numLocale: 'en-US'
+  }
+};
+function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+var lang = lsGet('tk_lang') === 'en' ? 'en' : 'tr';
+function t(k) { return I18N[lang][k] || k; }
+
+// ---------- Parsing consecutive tables / Ardışık tabloların çözümlenmesi ----------
+function num(v) {
+  var s = String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.');
+  var n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+// Offline copy: data embedded in the file, one line per sheet row, cells separated by "|".
+//   #CODE|TITLE|LOCATION   project title row (location goes to column L)
+//   BLOC|NOMBRE|...        header row;  ||sizes...  size row;  1|7|102|...  block row
+//   1|7|0*                 shorthand: every item of the block is 0
+var LIVE = typeof google !== 'undefined' && !!(google.script && google.script.run);
+var EMBED = /*EMBED_START*/null/*EMBED_END*/;
+function expand(text) {
+  var rows = [], n = 0;
+  String(text).split('\n').forEach(function (ln) {
+    ln = ln.replace(/\r$/, '');
+    if (!ln.trim()) return;
+    if (ln.charAt(0) === '#') {
+      var p = ln.slice(1).split('|'), r = [p[0], p[1] || ''];
+      while (r.length < 11) r.push('');
+      r.push(p[2] || '');
+      rows.push(r); return;
+    }
+    var f = ln.split('|');
+    if (f[0] === 'BLOC') n = f.length - 2;
+    if (f.length === 3 && f[2] === '0*') { f = f.slice(0, 2); for (var i = 0; i < n; i++) f.push('0'); }
+    rows.push(f);
+  });
+  return rows;
+}
+
+// Project location: column L (index 11) of the title row. Any text is accepted there
+// (a Maps link or an address); other columns are only checked for http(s) links.
+function findLoc(rows, i) {
+  var row = rows[i] || [];
+  function at(c) { var x = row[c]; return String(x == null ? '' : x).trim(); }
+  if (at(11)) return at(11);
+  for (var c = 2; c < row.length; c++) { if (/^https?:\/\//i.test(at(c))) return at(c); }
+  return '';
+}
+function mapUrl(loc) {
+  if (/^https?:\/\//i.test(loc)) return loc;
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(loc);
+}
+
+// Table layout: (project code | title) row, then BLOC | NOMBRE | item names,
+// then an optional size row, then block rows until a blank row, TOTAL row or a new table.
+function extractTables(rows) {
+  function cell(r, i) { var x = (rows[r] || [])[i]; return String(x == null ? '' : x).trim(); }
+  function up(s) { return s.toUpperCase(); }
+  var tables = {}, order = [];
+  for (var i = 0; i < rows.length - 1; i++) {
+    var a = cell(i, 0);
+    if (!a || up(a) === 'BLOC' || up(a) === 'TOTAL' || up(cell(i + 1, 0)) !== 'BLOC') continue;
+    var code = a, title = cell(i, 1).replace(/\s+/g, ' '), loc = findLoc(rows, i), hdr = rows[i + 1] || [], cols = [];
+    for (var c = 2; c < hdr.length; c++) {
+      var h = String(hdr[c] == null ? '' : hdr[c]).trim();
+      if (h) cols.push({ idx: c, key: h });
+    }
+    var r = i + 2, dims = {};
+    if (!cell(r, 0) && cols.some(function (k) { return cell(r, k.idx); })) {
+      cols.forEach(function (k) { dims[k.key] = cell(r, k.idx); });
+      r++;
+    }
+    var blocs = [];
+    for (; r < rows.length; r++) {
+      var b = cell(r, 0);
+      if (!b || up(b) === 'TOTAL' || up(cell(r + 1, 0)) === 'BLOC') break;
+      var vals = {};
+      cols.forEach(function (k) { vals[k.key] = num(cell(r, k.idx)); });
+      blocs.push({ bloc: b, nombre: cell(r, 1), vals: vals });
+    }
+    if (!tables[code]) order.push(code);
+    tables[code] = { code: code, title: title, loc: loc, items: cols.map(function (k) { return k.key; }), dims: dims, blocs: blocs };
+  }
+  return { tables: tables, order: order };
+}
+
+function shortName(key, code) {
+  var p = code + '-';
+  return key.toUpperCase().indexOf(p.toUpperCase()) === 0 ? key.slice(p.length) : key;
+}
+
+function qty(table, bloc, key) {
+  if (!table) return 0;
+  if (bloc === '__ALL__') return table.blocs.reduce(function (s, b) { return s + (b.vals[key] || 0); }, 0);
+  var b = table.blocs.filter(function (x) { return x.bloc === bloc; })[0];
+  return b ? (b.vals[key] || 0) : 0;
+}
+
+function buildRows(P, D, bloc) {
+  var items = P ? P.items.slice() : [];
+  if (D) D.items.forEach(function (k) { if (items.indexOf(k) < 0) items.push(k); });
+  var dims = Object.assign({}, D ? D.dims : {}, P ? P.dims : {});
+  return items.map(function (key) {
+    var p = qty(P, bloc, key), d = qty(D, bloc, key);
+    return { key: key, dim: dims[key] || '', p: p, d: d, rest: p - d };
+  });
+}
+
+// ---------- UI ----------
+var $ = function (id) { return document.getElementById(id); };
+var state = { P: null, D: null, mode: 'proposed' };
+function fmt(n) { return Number(n).toLocaleString(t('numLocale'), { maximumFractionDigits: 2 }); }
+function pctStr(n) { return lang === 'en' ? fmt(n) + '%' : '%' + fmt(n); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function setStatus(txt, err) { $('status').innerHTML = txt ? '<div class="msg' + (err ? ' err' : '') + '">' + txt + '</div>' : ''; }
+function barColor(pc) { return pc >= 100 ? 'var(--ok)' : pc > 0 ? 'var(--accent)' : 'var(--line)'; }
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (e) {
+    e.textContent = t(e.getAttribute('data-i18n'));
+  });
+  Array.prototype.forEach.call($('langSeg').children, function (b) {
+    b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+  });
+  closeDialogs();
+  updateSnap();
+  updatePhotoBtn();
+  if (state.P || state.D) afterLoad();
+}
+
+function updateSnap() {
+  var s = $('snap');
+  if (LIVE || !EMBED) { s.hidden = true; return; }
+  s.textContent = t('snapshot').replace('{d}', EMBED.date);
+  s.hidden = false;
+}
+
+function load() {
+  photoState.lists = {}; photoState.full = {};
+  if (!LIVE) {
+    if (!EMBED) { setStatus(t('noData'), true); return; }
+    state.P = extractTables(expand(EMBED.proposed));
+    state.D = extractTables(expand(EMBED.done));
+    $('btnReload').hidden = true;
+    setStatus('');
+    afterLoad();
+    refreshCounts();
+    return;
+  }
+  setStatus(t('loading'));
+  google.script.run
+    .withSuccessHandler(function (data) {
+      state.P = extractTables(data.proposed);
+      state.D = extractTables(data.done);
+      setStatus('');
+      afterLoad();
+      refreshCounts();
+    })
+    .withFailureHandler(function (e) { setStatus(t('loadFail') + esc(e.message || e), true); })
+    .getData();
+}
+
+function projectCodes() {
+  var out = [];
+  [state.P, state.D].forEach(function (s) {
+    if (s) s.order.forEach(function (c) { if (out.indexOf(c) < 0) out.push(c); });
+  });
+  return out;
+}
+
+function afterLoad() {
+  var codes = projectCodes();
+  if (!codes.length) {
+    setStatus(t('noProjects'), true);
+    $('pickers').hidden = true; $('results').hidden = true; return;
+  }
+  var cur = $('selProject').value;
+  $('selProject').innerHTML = codes.map(function (c) {
+    var tb = (state.P && state.P.tables[c]) || (state.D && state.D.tables[c]);
+    return '<option value="' + esc(c) + '">' + esc(c) + (tb && tb.title ? ' - ' + esc(tb.title) : '') + '</option>';
+  }).join('');
+  if (codes.indexOf(cur) >= 0) $('selProject').value = cur;
+  $('pickers').hidden = false;
+  fillBlocs();
+}
+
+function fillBlocs() {
+  var code = $('selProject').value;
+  var P = state.P && state.P.tables[code], D = state.D && state.D.tables[code];
+  var blocs = [];
+  [P, D].forEach(function (tb) {
+    if (tb) tb.blocs.forEach(function (b) { if (blocs.indexOf(b.bloc) < 0) blocs.push(b.bloc); });
+  });
+  var cur = $('selBloc').value;
+  $('selBloc').innerHTML = '<option value="__ALL__">' + esc(t('allBlocksTotal')) + '</option>' +
+    blocs.map(function (b) { return '<option value="' + esc(b) + '">' + esc(t('blockN')) + esc(b) + '</option>'; }).join('');
+  if (cur === '__ALL__' || blocs.indexOf(cur) >= 0) $('selBloc').value = cur;
+  render();
+}
+
+function msg(txt) {
+  $('metaTitle').textContent = ''; $('metaSub').textContent = ''; $('stats').innerHTML = '';
+  $('overall').hidden = true; $('loc').hidden = true;
+  $('tbl').innerHTML = '<tbody><tr><td>' + txt + '</td></tr></tbody>';
+  $('results').hidden = false;
+}
+
+function render() {
+  var code = $('selProject').value, bloc = $('selBloc').value, mode = state.mode;
+  updatePhotoBtn();
+  var P = state.P && state.P.tables[code], D = state.D && state.D.tables[code];
+  var base = P || D;
+  if (!base) return;
+  if (mode === 'proposed' && !P) return msg(t('noProposed'));
+  if (mode === 'done' && !D) return msg(t('noDone'));
+  if (mode === 'compare' && (!P || !D)) return msg(t('needBoth'));
+
+  var rows = buildRows(P, D, bloc);
+  if ($('hideZero').checked) {
+    rows = rows.filter(function (r) { return (mode === 'done' ? r.d : mode === 'proposed' ? r.p : (r.p || r.d)) !== 0; });
+  }
+  var blocRow = base.blocs.filter(function (b) { return b.bloc === bloc; })[0];
+  $('metaTitle').textContent = base.code + (base.title ? ' · ' + base.title : '');
+  var loc = (P && P.loc) || (D && D.loc) || '';
+  $('loc').hidden = !loc;
+  if (loc) $('loc').href = mapUrl(loc);
+  $('metaSub').textContent = bloc === '__ALL__' ? t('allBlocks') : t('blockN') + bloc + (blocRow && blocRow.nombre ? ' · NOMBRE: ' + blocRow.nombre : '');
+
+  function sum(f) { return rows.reduce(function (s, r) { return s + f(r); }, 0); }
+  var tp = sum(function (r) { return r.p; }), td = sum(function (r) { return r.d; }), tr = sum(function (r) { return r.rest; });
+  var stats, head, body, foot;
+  $('overall').hidden = true;
+
+  if (mode === 'compare') {
+    var pct = tp ? Math.min(100, td / tp * 100) : 0;
+    stats = [[t('proposed'), fmt(tp), ''], [t('done'), fmt(td), 'ok'], [t('remaining'), fmt(tr), 'warn'], [t('completion'), pctStr(pct), 'ok']];
+    $('overall').hidden = false; $('overallBar').style.width = pct + '%';
+    head = '<tr><th>' + t('item') + '</th><th class="num">' + t('size') + '</th><th class="num">' + t('proposed') + '</th><th class="num">' + t('done') + '</th><th class="num">' + t('remaining') + '</th><th class="num">' + t('progress') + '</th></tr>';
+    body = rows.map(function (r) {
+      var pc = r.p ? Math.min(100, r.d / r.p * 100) : 0;
+      return '<tr class="' + (r.p === 0 && r.d === 0 ? 'zero' : '') + '"><td><span class="itemlink" data-key="' + esc(r.key) + '">' + esc(shortName(r.key, code)) + '</span></td>' +
+        '<td class="dim">' + esc(r.dim) + '</td><td class="num">' + fmt(r.p) + '</td><td class="num">' + fmt(r.d) + '</td><td class="num rest">' + fmt(r.rest) + '</td>' +
+        '<td class="num"><div class="bar"><i style="width:' + pc + '%;background:' + barColor(pc) + '"></i></div><span class="pct">' + pctStr(pc) + '</span></td></tr>';
+    }).join('');
+    foot = '<tr><td>' + t('total') + '</td><td></td><td class="num">' + fmt(tp) + '</td><td class="num">' + fmt(td) + '</td><td class="num">' + fmt(tr) + '</td><td class="num">' + pctStr(pct) + '</td></tr>';
+  } else {
+    var k = mode === 'done' ? 'd' : 'p', total = mode === 'done' ? td : tp;
+    stats = [[mode === 'done' ? t('totalDone') : t('totalProposed'), fmt(total), mode === 'done' ? 'ok' : ''], [t('itemCount'), String(rows.length), '']];
+    head = '<tr><th>' + t('item') + '</th><th class="num">' + t('size') + '</th><th class="num">' + t('qty') + '</th></tr>';
+    body = rows.map(function (r) {
+      return '<tr class="' + (r[k] === 0 ? 'zero' : '') + '"><td><span class="itemlink" data-key="' + esc(r.key) + '">' + esc(shortName(r.key, code)) + '</span></td><td class="dim">' + esc(r.dim) + '</td><td class="num">' + fmt(r[k]) + '</td></tr>';
+    }).join('');
+    foot = '<tr><td>' + t('total') + '</td><td></td><td class="num">' + fmt(total) + '</td></tr>';
+  }
+  $('stats').innerHTML = stats.map(function (s) { return '<div class="stat ' + s[2] + '"><span>' + s[0] + '</span><b>' + s[1] + '</b></div>'; }).join('');
+  $('tbl').innerHTML = '<thead>' + head + '</thead><tbody>' + (body || '<tr><td colspan="6">' + t('noItems') + '</td></tr>') + '</tbody><tfoot>' + foot + '</tfoot>';
+  $('results').hidden = false;
+}
+
+// Item details: size, quantity in the selected block and the grand total
+function openModal(key) {
+  var code = $('selProject').value, bloc = $('selBloc').value;
+  var P = state.P && state.P.tables[code], D = state.D && state.D.tables[code];
+  var dim = (P && P.dims[key]) || (D && D.dims[key]) || '';
+  $('modalName').textContent = shortName(key, code);
+  $('modalDim').textContent = dim ? t('sizeLabel') + dim : '';
+  function line(label, b, cls) {
+    var p = qty(P, b, key), d = qty(D, b, key), pc = p ? Math.min(100, d / p * 100) : 0;
+    return '<tr class="' + (cls || '') + '"><td>' + label + '</td><td class="num">' + fmt(p) + '</td><td class="num">' + fmt(d) + '</td><td class="num">' + fmt(p - d) + '</td>' +
+      '<td class="num"><span class="pct">' + pctStr(pc) + '</span></td></tr>';
+  }
+  var rows = (bloc === '__ALL__' ? '' : line(esc(t('blockN')) + esc(bloc), bloc)) + line(esc(t('totalAll')), '__ALL__', 'total');
+  $('modalBody').innerHTML = '<table class="mt"><thead><tr><th></th><th class="num">' + t('proposed') + '</th><th class="num">' + t('done') + '</th><th class="num">' + t('remaining') + '</th><th class="num">%</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  $('modal').hidden = false;
+}
+
+$('tbl').onclick = function (e) {
+  var b = e.target.closest('.itemlink'); if (!b) return;
+  openModal(b.getAttribute('data-key'));
+};
+$('modalClose').onclick = function () { $('modal').hidden = true; };
+$('modal').onclick = function (e) { if (e.target === $('modal')) $('modal').hidden = true; };
+document.onkeydown = function (e) {
+  if (!$('lb').hidden) {
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') stepLightbox(-1);
+    else if (e.key === 'ArrowRight') stepLightbox(1);
+    return;
+  }
+  if (e.key === 'Escape') closeDialogs();
+};
+
+// ---------- Photos / Fotoğraflar ----------
+// LIVE (Apps Script): photos go to a Drive folder, with an index + thumbnails in the "photos" sheet.
+// Offline copy: photos are kept in this browser (IndexedDB) and never leave the device.
+var photoState = { counts: {}, lists: {}, shown: [], lb: -1, full: {}, armed: false, armT: 0 };
+
+function gcall(fn, args) {
+  return new Promise(function (res, rej) {
+    var r = google.script.run.withSuccessHandler(res).withFailureHandler(function (e) {
+      rej(new Error((e && e.message) || String(e)));
+    });
+    r[fn].apply(r, args);
+  });
+}
+
+function localStore() {
+  var dbp = null;
+  function db() {
+    if (!dbp) dbp = new Promise(function (res, rej) {
+      if (!window.indexedDB) { rej(new Error('IndexedDB unavailable')); return; }
+      var r = indexedDB.open('tekya_photos', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('photos', { keyPath: 'id' }).createIndex('project', 'project'); };
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error || new Error('IndexedDB error')); };
+    });
+    return dbp;
+  }
+  function run(mode, fn) {
+    return db().then(function (d) {
+      return new Promise(function (res, rej) {
+        var tx = d.transaction('photos', mode), out = {};
+        fn(tx.objectStore('photos'), out);
+        tx.oncomplete = function () { res(out.v); };
+        tx.onerror = tx.onabort = function () { rej(tx.error || new Error('IndexedDB error')); };
+      });
+    });
+  }
+  return {
+    counts: function (codes) {
+      var out = {};
+      return Promise.all((codes || []).map(function (c) {
+        return run('readonly', function (s, o) { s.index('project').count(c).onsuccess = function (e) { o.v = e.target.result; }; })
+          .then(function (n) { if (n) out[c] = n; });
+      })).then(function () { return out; });
+    },
+    list: function (code) {
+      return run('readonly', function (s, o) { s.index('project').getAll(code).onsuccess = function (e) { o.v = e.target.result; }; })
+        .then(function (all) {
+          return (all || []).map(function (r) { return { id: r.id, block: r.block, name: r.name, time: r.time, thumb: r.thumb }; })
+            .sort(function (a, b) { return b.time - a.time; });
+        });
+    },
+    add: function (code, block, name, full, thumb) {
+      var rec = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), project: code, block: block || '', name: name, time: Date.now(), thumb: thumb, full: 'data:image/jpeg;base64,' + full };
+      return run('readwrite', function (s) { s.put(rec); }).then(function () { return { id: rec.id, time: rec.time }; });
+    },
+    full: function (id) {
+      return run('readonly', function (s, o) { s.get(id).onsuccess = function (e) { o.v = e.target.result; }; })
+        .then(function (r) { return r ? r.full : null; });
+    },
+    del: function (id) { return run('readwrite', function (s) { s['delete'](id); }); }
+  };
+}
+
+var Store = LIVE ? {
+  counts: function () { return gcall('getPhotoCounts', []); },
+  list: function (code) { return gcall('getPhotos', [code]); },
+  add: function (code, block, name, full, thumb) { return gcall('savePhoto', [code, block, name, full, thumb]); },
+  full: function (id) { return gcall('getPhoto', [id]); },
+  del: function (id) { return gcall('deletePhoto', [id]); }
+} : localStore();
+
+function refreshCounts() {
+  Store.counts(projectCodes()).then(function (c) { photoState.counts = c || {}; updatePhotoBtn(); }, function () {});
+}
+function updatePhotoBtn() {
+  var n = photoState.counts[$('selProject').value] || 0;
+  $('photosLbl').textContent = t('photos') + (n ? ' (' + n + ')' : '');
+}
+function closeDialogs() {
+  $('modal').hidden = true; $('upModal').hidden = true; $('phModal').hidden = true; closeLightbox();
+}
+function blockList(code) {
+  var P = state.P && state.P.tables[code], D = state.D && state.D.tables[code], out = [];
+  [P, D].forEach(function (tb) { if (tb) tb.blocs.forEach(function (b) { if (out.indexOf(b.bloc) < 0) out.push(b.bloc); }); });
+  return out;
+}
+function fmtDate(ms) {
+  try {
+    return new Date(ms).toLocaleString(t('numLocale'), { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return ''; }
+}
+function errText(e) { return t('failed') + (e && e.message ? e.message : e); }
+
+// --- Resize in the browser: full photo max 1600px, thumbnail max 220px (kept small enough for a sheet cell)
+function jpeg(im, max, q) {
+  var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height, s = Math.min(1, max / Math.max(w, h));
+  var c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * s)); c.height = Math.max(1, Math.round(h * s));
+  var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.drawImage(im, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', q);
+}
+function prepare(file) {
+  var url = URL.createObjectURL(file);
+  return new Promise(function (res, rej) {
+    var im = new Image();
+    im.onload = function () { res(im); };
+    im.onerror = function () { rej(new Error(t('badImage'))); };
+    im.src = url;
+  }).then(function (im) {
+    var full = jpeg(im, 1600, 0.82), thumb = jpeg(im, 220, 0.6);
+    for (var q = 0.5; thumb.length > 40000 && q > 0.1; q -= 0.1) thumb = jpeg(im, 220, q);
+    URL.revokeObjectURL(url);
+    return { full: full.split(',')[1], thumb: thumb };
+  }, function (e) { URL.revokeObjectURL(url); throw e; });
+}
+
+// --- Upload dialog
+function openUpload() {
+  var code = $('selProject').value; if (!code) return;
+  var cur = $('selBloc').value;
+  $('upSub').textContent = t('project') + ': ' + code;
+  $('upBloc').innerHTML = '<option value="">' + esc(t('noBlock')) + '</option>' +
+    blockList(code).map(function (b) { return '<option value="' + esc(b) + '">' + esc(t('blockN')) + esc(b) + '</option>'; }).join('');
+  $('upBloc').value = cur && cur !== '__ALL__' ? cur : '';
+  $('upList').innerHTML = '';
+  $('upNote').hidden = LIVE;
+  $('upModal').hidden = false;
+}
+function addUpRow(name) {
+  var d = document.createElement('div'), a = document.createElement('span'), s = document.createElement('span');
+  d.className = 'uprow'; a.className = 'upname'; s.className = 'upst';
+  a.textContent = name; s.textContent = t('uploading');
+  d.appendChild(a); d.appendChild(s); $('upList').appendChild(d);
+  return s;
+}
+function uploadOne(file, code, block) {
+  var st = addUpRow(file.name);
+  return prepare(file).then(function (img) {
+    return Store.add(code, block, file.name, img.full, img.thumb);
+  }).then(function () {
+    st.textContent = '✓ ' + t('uploaded'); st.className = 'upst ok';
+    photoState.lists[code] = null;
+    photoState.counts[code] = (photoState.counts[code] || 0) + 1;
+    updatePhotoBtn();
+  }).catch(function (e) {
+    st.textContent = errText(e); st.className = 'upst bad';
+  });
+}
+function onPick(input) {
+  var files = Array.prototype.slice.call(input.files || []);
+  input.value = '';
+  var code = $('selProject').value, block = $('upBloc').value;
+  files.reduce(function (p, f) { return p.then(function () { return uploadOne(f, code, block); }); }, Promise.resolve());
+}
+
+// --- Photos dialog
+function fillPhotoFilter(list) {
+  var keep = $('phBloc').value, seen = [], none = false;
+  list.forEach(function (p) { if (p.block) { if (seen.indexOf(p.block) < 0) seen.push(p.block); } else none = true; });
+  seen.sort(function (a, b) { return (parseFloat(a) - parseFloat(b)) || (a < b ? -1 : a > b ? 1 : 0); });
+  $('phBloc').innerHTML = '<option value="__ALL__">' + esc(t('all')) + '</option>' +
+    seen.map(function (b) { return '<option value="' + esc(b) + '">' + esc(t('blockN')) + esc(b) + '</option>'; }).join('') +
+    (none ? '<option value="__NONE__">' + esc(t('noBlock')) + '</option>' : '');
+  $('phBloc').value = keep || '__ALL__';
+  if ($('phBloc').value !== keep) $('phBloc').value = '__ALL__';
+  $('phBloc').hidden = !list.length;
+}
+function renderPhotos() {
+  var code = $('selProject').value, list = photoState.lists[code] || [], f = $('phBloc').value || '__ALL__';
+  var shown = list.filter(function (p) { return f === '__ALL__' || (f === '__NONE__' ? !p.block : p.block === f); });
+  photoState.shown = shown;
+  if (!shown.length) { $('phGrid').innerHTML = '<div class="note">' + esc(t('noPhotos')) + '</div>'; return; }
+  $('phGrid').innerHTML = shown.map(function (p, i) {
+    return '<button type="button" class="ph" data-i="' + i + '"><img alt="" src="' + esc(p.thumb) + '"><span>' +
+      esc((p.block ? t('blockN') + p.block + ' · ' : '') + fmtDate(p.time)) + '</span></button>';
+  }).join('');
+}
+function openPhotos() {
+  var code = $('selProject').value; if (!code) return;
+  var base = (state.P && state.P.tables[code]) || (state.D && state.D.tables[code]);
+  $('phSub').textContent = code + (base && base.title ? ' · ' + base.title : '');
+  $('phGrid').innerHTML = '<div class="note">' + esc(t('phLoading')) + '</div>';
+  $('phBloc').value = '__ALL__'; $('phBloc').hidden = true;
+  $('phModal').hidden = false;
+  var cached = photoState.lists[code];
+  (cached ? Promise.resolve(cached) : Store.list(code)).then(function (list) {
+    photoState.lists[code] = list; photoState.counts[code] = list.length; updatePhotoBtn();
+    fillPhotoFilter(list); renderPhotos();
+  }).catch(function (e) { $('phGrid').innerHTML = '<div class="note err">' + esc(errText(e)) + '</div>'; });
+}
+
+// --- Lightbox (full photo, previous / next, delete)
+function disarmDelete() {
+  clearTimeout(photoState.armT); photoState.armed = false;
+  $('lbDel').textContent = t('delete'); $('lbDel').classList.remove('danger');
+}
+function closeLightbox() { photoState.lb = -1; $('lb').hidden = true; disarmDelete(); }
+function showLightbox() {
+  var p = photoState.shown[photoState.lb];
+  if (!p) { closeLightbox(); return; }
+  var cached = photoState.full[p.id];
+  $('lbCap').textContent = (p.block ? t('blockN') + p.block + ' · ' : '') + fmtDate(p.time) + '  (' + (photoState.lb + 1) + '/' + photoState.shown.length + ')';
+  $('lbImg').src = cached || p.thumb;
+  $('lbImg').className = cached ? '' : 'blur';
+  disarmDelete();
+  if (cached) return;
+  Store.full(p.id).then(function (src) {
+    if (!src) return;
+    var keys = Object.keys(photoState.full);
+    if (keys.length >= 8) delete photoState.full[keys[0]];
+    photoState.full[p.id] = src;
+    var cur = photoState.shown[photoState.lb];
+    if (cur && cur.id === p.id) { $('lbImg').src = src; $('lbImg').className = ''; }
+  }).catch(function (e) { $('lbCap').textContent += ' · ' + errText(e); });
+}
+function openLightbox(i) { photoState.lb = i; $('lb').hidden = false; showLightbox(); }
+function stepLightbox(d) {
+  var n = photoState.shown.length; if (!n) return;
+  photoState.lb = (photoState.lb + d + n) % n; showLightbox();
+}
+function deleteCurrent() {
+  var p = photoState.shown[photoState.lb]; if (!p) return;
+  if (!photoState.armed) {   // first tap arms, second tap deletes
+    photoState.armed = true; $('lbDel').textContent = t('sure'); $('lbDel').classList.add('danger');
+    photoState.armT = setTimeout(disarmDelete, 3500); return;
+  }
+  disarmDelete();
+  Store.del(p.id).then(function () {
+    var code = $('selProject').value;
+    photoState.lists[code] = (photoState.lists[code] || []).filter(function (x) { return x.id !== p.id; });
+    delete photoState.full[p.id];
+    photoState.counts[code] = photoState.lists[code].length; updatePhotoBtn();
+    fillPhotoFilter(photoState.lists[code]); renderPhotos();
+    if (!photoState.shown.length) closeLightbox();
+    else { photoState.lb = Math.min(photoState.lb, photoState.shown.length - 1); showLightbox(); }
+  }).catch(function (e) { $('lbCap').textContent += ' · ' + errText(e); });
+}
+
+$('btnUpload').onclick = openUpload;
+$('btnPhotos').onclick = openPhotos;
+$('btnCam').onclick = function () { $('inCam').click(); };
+$('btnPick').onclick = function () { $('inFile').click(); };
+$('inCam').onchange = function () { onPick(this); };
+$('inFile').onchange = function () { onPick(this); };
+$('upClose').onclick = function () { $('upModal').hidden = true; };
+$('phClose').onclick = function () { $('phModal').hidden = true; };
+$('upModal').onclick = function (e) { if (e.target === $('upModal')) $('upModal').hidden = true; };
+$('phModal').onclick = function (e) { if (e.target === $('phModal')) $('phModal').hidden = true; };
+$('phBloc').onchange = renderPhotos;
+$('phGrid').onclick = function (e) {
+  var b = e.target.closest('.ph'); if (!b) return;
+  openLightbox(parseInt(b.getAttribute('data-i'), 10));
+};
+$('lb').onclick = function (e) { if (e.target === $('lb')) closeLightbox(); };
+$('lbClose').onclick = closeLightbox;
+$('lbPrev').onclick = function () { stepLightbox(-1); };
+$('lbNext').onclick = function () { stepLightbox(1); };
+$('lbDel').onclick = deleteCurrent;
+
+$('langSeg').onclick = function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  lang = b.getAttribute('data-lang') === 'en' ? 'en' : 'tr';
+  lsSet('tk_lang', lang);
+  applyLang();
+};
+$('selProject').onchange = fillBlocs;
+$('selBloc').onchange = render;
+$('hideZero').onchange = render;
+$('btnReload').onclick = load;
+$('modeSeg').onclick = function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  state.mode = b.getAttribute('data-mode');
+  Array.prototype.forEach.call($('modeSeg').children, function (x) { x.classList.toggle('on', x === b); });
+  render();
+};
+
+applyLang();
+load();
+</script>
+</body>
 </html>
