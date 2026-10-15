@@ -1,0 +1,9 @@
+{
+  "appId": "com.myapp.webview",
+  "appName": "تطبيقي",
+  "webDir": "www",
+  "server": {
+    "url": "https://script.google.com/macros/s/AKfycbwGQ2UvAbGtlaPo_PiaVpEh7uxTgacoWvzDaJ7PaYBJfgWCnFO8J1mR7sq6DW33g5a2aQ/exec",
+    "cleartext": false
+  }
+}
